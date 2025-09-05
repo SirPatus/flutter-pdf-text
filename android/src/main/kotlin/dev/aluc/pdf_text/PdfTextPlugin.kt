@@ -5,7 +5,7 @@ import android.os.Looper
 import androidx.annotation.NonNull
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
-import com.tom_roush.pdfbox.util.PDFBoxResourceLoader
+import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
