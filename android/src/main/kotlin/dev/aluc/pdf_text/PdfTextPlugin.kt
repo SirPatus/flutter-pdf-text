@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.NonNull
+import com.tom_roush.pdfbox.util.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -18,7 +19,7 @@ class PdfTextPlugin: FlutterPlugin, MethodChannel.MethodCallHandler {
 
     override fun onAttachedToEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         // Inizializza PDFBox usando reflection: proviamo le possibili classi che potrebbero contenere init(...)
-        safeInitPdfBoxResourceLoader(binding.applicationContext)
+        PDFBoxResourceLoader.init(binding.applicationContext)
 
         // Crea il channel per Dart <-> Kotlin
         channel = MethodChannel(binding.binaryMessenger, "pdf_text")
@@ -61,35 +62,6 @@ class PdfTextPlugin: FlutterPlugin, MethodChannel.MethodCallHandler {
             }
         }
     }
-
-    // ================= reflection-based PDFBox init =================
-    private fun safeInitPdfBoxResourceLoader(context: Context) {
-        val candidates = listOf(
-            "com.tom_roush.pdfbox.android.PDFBoxResourceLoader",
-            "com.tom_roush.pdfbox.util.PDFBoxResourceLoader",
-            "com.tom_roush.pdfbox.PDFBoxResourceLoader"
-        )
-
-        for (fqcn in candidates) {
-            try {
-                val cls = Class.forName(fqcn)
-                val method = cls.getMethod("init", Context::class.java)
-                method.invoke(null, context)
-                // init succeeded: esci
-                return
-            } catch (_: ClassNotFoundException) {
-                // prova il prossimo fqcn
-            } catch (e: NoSuchMethodException) {
-                // classe trovata ma metodo init non presente, prova il prossimo
-            } catch (e: Exception) {
-                // se si verifica un errore inatteso, lo logghiamo e proviamo altro
-                e.printStackTrace()
-            }
-        }
-        // Se siamo qui, nessuna inizializzazione è stata eseguita.
-        // Non lanciamo eccezione: molte app funzionano comunque, ma alcune funzioni di PDFBox potrebbero fallire a runtime.
-    }
-    // ================================================================
 
     private fun initDoc(result: MethodChannel.Result, path: String, password: String) {
         getDoc(result, path, password)?.use { doc ->
