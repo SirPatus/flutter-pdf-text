@@ -2,14 +2,14 @@ group 'dev.aluc.pdf_text'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.3.50'
+    ext.kotlin_version = '1.8.22'
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:7.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -17,7 +17,7 @@ buildscript {
 rootProject.allprojects {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
 }
 
@@ -25,21 +25,42 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 28
+    // namespace richiesto da AGP moderni
+    namespace "dev.aluc.pdf_text"
+    compileSdkVersion 30
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
     }
+
     defaultConfig {
-        minSdkVersion 16
+        // minSdk moderno consigliato
+        minSdkVersion 21
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    // kotlinOptions a livello android in file Groovy
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+
     lintOptions {
         disable 'InvalidPackage'
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+}
+
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.tom_roush:pdfbox-android:1.8.10.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    // versione corretta disponibile su Maven Central
+    implementation "com.tom-roush:pdfbox-android:2.0.27.0"
 }
