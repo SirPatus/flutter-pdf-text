@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.NonNull
-import com.tom_roush.pdfbox.util.PDFBoxResourceLoader
 import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.text.PDFTextStripper
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -18,10 +17,10 @@ class PdfTextPlugin: FlutterPlugin, MethodChannel.MethodCallHandler {
     private lateinit var channel: MethodChannel
 
     override fun onAttachedToEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
-        // Inizializza PDFBox usando reflection: proviamo le possibili classi che potrebbero contenere init(...)
-        PDFBoxResourceLoader.init(binding.applicationContext)
+        // Inizializza PDFBox se la classe è presente: usiamo reflection per evitare import hard-coded
+        tryInitPdfBox(binding.applicationContext)
 
-        // Crea il channel per Dart <-> Kotlin
+        // Imposta il channel
         channel = MethodChannel(binding.binaryMessenger, "pdf_text")
         channel.setMethodCallHandler(this)
     }
@@ -62,6 +61,33 @@ class PdfTextPlugin: FlutterPlugin, MethodChannel.MethodCallHandler {
             }
         }
     }
+
+    // ========== reflection-based PDFBox init ==========
+    private fun tryInitPdfBox(context: Context) {
+        val candidates = listOf(
+            "com.tom_roush.pdfbox.android.PDFBoxResourceLoader",
+            "com.tom_roush.pdfbox.util.PDFBoxResourceLoader",
+            "com.tom_roush.pdfbox.PDFBoxResourceLoader"
+        )
+
+        for (fqcn in candidates) {
+            try {
+                val cls = Class.forName(fqcn)
+                val method = cls.getMethod("init", Context::class.java)
+                method.invoke(null, context)
+                return // successo
+            } catch (e: ClassNotFoundException) {
+                // non trovato, proviamo il prossimo
+            } catch (e: NoSuchMethodException) {
+                // trovato ma senza init(Context)
+            } catch (e: Exception) {
+                // loggiamo e continuiamo
+                e.printStackTrace()
+            }
+        }
+        // nessuna inizializzazione eseguita: non falliamo qui
+    }
+    // ================================================
 
     private fun initDoc(result: MethodChannel.Result, path: String, password: String) {
         getDoc(result, path, password)?.use { doc ->
